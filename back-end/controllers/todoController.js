@@ -1,51 +1,71 @@
 const db=require('../db');
-const {v4 : uuidv4} = require('uuid');
 
-exports.getTodos=(req,res)=> {
-    db.all('select * from todos', (err, rows) => {
-        if (err) {
-            res.status(400)
-            throw new Error('no data')
-        }
-        res.status(200).json({todos: rows, message: ""})
-    })
+//할일 목록들 가져오기
+exports.getTodos=async (req,res)=> {
+    const connection = await db.getConnection();
+    try {
+        const sql = "select * from todos";
+        const rows = await connection.query(sql)
+        await connection.commit()
+        res.json(rows)
+    }catch(err){
+        console.log(err);
+        await connection.rollback()
+    }finally{
+        connection.release();
+    }
 }
 
-exports.createTodo=(req,res)=>{
+//할일 목록 생성
+exports.createTodo=async (req,res) => {
     const {value, completed}=req.body
-    const id=uuidv4();
-
-    db.run('insert into todos(id,title,completed) values(?,?,?)',[id,value,false],err=>{
-        if(err){
-            res.status(400)
-            throw new Error("could not insert data")
-        }
-        res.status(201).json({
-            todos: {id, title: value, completed},
-            message: 'success'
-        })
-    })
+    const connection=await db.getConnection();
+    try {
+        const sql = `insert into todos(title,completed) values(${value},${completed})`;
+        const rows = await connection.query(sql);
+        await connection.commit();
+    }catch(err) {
+        console.log(err);
+        await connection.rollback();
+    }finally{
+        await connection.release()
+    }
 }
 
-exports.updateTodo=(req,res)=>{
+//할일 목록 수정
+exports.updateTodo=async (req,res)=>{
     const {id}=req.params
     const {value}=req.body
-
-    db.run('update todos set title=? where id=?',[value,id]).all(
-        "select * from todos",
-        (err,rows)=>{
-            if(err){
-                res.status(400)
-                throw new Error('could not update data')
-            }
-            res.status(200).json({todos: rows, message: `update ${value}` })
-        }
-    )
+    const connection=await db.getConnection();
+    try{
+        const sql=`update set title=${value} where id=${id}`
+        await connection.query(sql);
+        await connection.commit();
+        res.json({message: "update success"})
+    }catch(err){
+        console.log(err);
+        await connection.rollback();
+    }finally{
+        await connection.release();
+    }
 }
 
-exports.completeTodo=(req,res)=>{
+//할일 목록 check 여부
+exports.completeTodo=async (req,res)=>{
     const {id}=req.params
     const {completed}=req.body
+    const connection=await db.getConnection();
+    try{
+        const sql=`update todos set completed = ${completed} where = ${id}`
+        await connection.query(sql);
+        await connection.commit()
+        res.json({message:"update success"})
+    }catch(err){
+        console.log(err);
+        await connection.rollback()
+    }finally{
+        await connection.release()
+    }
 
     db.run('update todos set completed = ? where id = ?',[completed,id]).all(
         "select * from todos",

@@ -1,8 +1,12 @@
-const sqlite3 = require('sqlite3').verbose()
-const db=new sqlite3.Database('./todo.db');
+const mysql      = require('mysql2/promise');
+const dotenv=require('dotenv')
+dotenv.config()
+const connection = mysql.createPool({
+    host     : 'localhost',
+    user     : 'root',
+    password : process.env.DB_PASSWORD,
+    database : 'todos',
+    connectionLimit: 5,
+});
 
-db.serialize(()=>{
-    db.run('create table if not exists todos(id text, title text, completed boolean)')
-})
-
-module.exports=db
+module.exports=connection
