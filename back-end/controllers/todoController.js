@@ -1,6 +1,6 @@
 const db=require('../db');
 
-//할일 목록들 가져오기
+//전체 할일 가져오기
 exports.getTodos=async (req,res)=> {
     const connection = await db.getConnection();
     try {
@@ -80,6 +80,7 @@ exports.completeTodo=async (req,res)=>{
     )
 }
 
+//할일 목록 삭제
 exports.deleteTodo=(req,res)=>{
     const {id}=req.params
     db.run("delete from todos where=?",[id]).all(
